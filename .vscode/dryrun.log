@@ -1,0 +1,6 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/classes/cs4351/cs435146/prog2'
+cd Parse; java java_cup.Main -parser Grm -expect 3 -nonterms -dump_grammar -dump_states <Grm.cup >Grm.out 2>Grm.err
+javac -g Parse/*.java
+make: Leaving directory '/classes/cs4351/cs435146/prog2'
+ 

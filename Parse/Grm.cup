@@ -1,0 +1,369 @@
+/* Given dont touch */
+
+package Parse;
+
+action code {: static Symbol.Symbol sym(String s) {
+	         return Symbol.Symbol.symbol(s);
+	        }
+	    :};
+
+parser code  {: 
+  Lexer lexer;
+
+  public void syntax_error(java_cup.runtime.Symbol current) {
+   report_error("Syntax error (" + current.sym + ")", current);
+  }
+
+  ErrorMsg.ErrorMsg errorMsg;
+
+  public void report_error(String message, java_cup.runtime.Symbol info) {
+      errorMsg.error(info.left, message);
+  }
+
+  public Grm(Lexer l, ErrorMsg.ErrorMsg err) {
+    this();
+    errorMsg=err;
+    lexer=l;
+  }
+:};
+
+scan with {: return lexer.nextToken(); :};
+
+terminal String ID, STRING;
+terminal Integer INT;
+terminal COMMA, COLON, SEMICOLON, LPAREN, RPAREN, LBRACK, RBRACK, 
+	LBRACE, RBRACE, DOT, PLUS, MINUS, TIMES, DIVIDE, EQ, NEQ, LT, LE, 
+	GT, GE, AND, OR, ASSIGN, ARRAY, IF, THEN, ELSE, WHILE, FOR, TO,
+	DO, LET, IN, END, OF, BREAK, NIL, FUNCTION, VAR, TYPE;
+
+/* Given dont touch ^*/
+
+
+
+non terminal Absyn.ArrayExpression     ArrayExpression;
+
+non terminal Absyn.AssignExpression    AssignExpression;
+
+non terminal Absyn.CallExpression      CallExpression;
+
+non terminal Absyn.NameType            DeclarationsTypeId;
+
+non terminal Absyn.DeclarationsList    DeclarationsList;
+
+non terminal Absyn.Declarations        Declarations;
+
+non terminal Absyn.Expression          Expression;
+
+non terminal Absyn.ExpressionList      ExpressionList;
+
+non terminal Absyn.ExpressionList      FunctionArgumentList;
+
+non terminal Absyn.FieldVar            FieldVar;
+
+non terminal Absyn.FieldList           FieldList;
+
+non terminal Absyn.FunctionDeclarations  FunctionDeclarations;
+
+non terminal Absyn.ForExpression       ForExpression;
+
+non terminal Absyn.FieldExpressionList FieldExpressionList;
+
+non terminal Absyn.IfExpression        IfExpression;
+
+non terminal Absyn.LetExpression       LetExpression;
+
+non terminal Absyn.ExpressionList      NextFunctionArgumentList;
+
+non terminal Absyn.ExpressionList      NextSequence;
+
+non terminal Absyn.FunctionDeclarations  NextFunctionDeclarations;
+
+non terminal Absyn.TypeDeclarations    NextTypeDeclarations;
+
+non terminal Absyn.FieldList           NextFieldList;
+
+non terminal Absyn.FieldExpressionList NextFieldExpressionList;
+
+non terminal Absyn.OpExpression        OpExpression;
+
+non terminal Absyn.RecordExpression    RecordExpression;
+
+non terminal Absyn.SeqExpression       SeqExpression;
+
+non terminal Absyn.ExpressionList      Sequence;
+
+non terminal Absyn.SubscriptVar        SubscriptVar;
+
+non terminal Absyn.TypeDeclarations    TypeDeclarations;
+
+non terminal Absyn.Types               Types;
+
+non terminal Absyn.Var                 Var;
+
+non terminal Absyn.VarDeclarations     VarDeclarations;
+
+non terminal Absyn.WhileExpression     WhileExpression;
+
+non terminal empty;
+
+/* Given dont touch */
+
+precedence nonassoc THEN;
+precedence nonassoc ELSE;
+precedence nonassoc ASSIGN;
+precedence left     OR;
+precedence left     AND;
+precedence nonassoc EQ, NEQ, LT, LE, GT, GE;
+precedence left     PLUS, MINUS;
+precedence left     TIMES, DIVIDE;
+
+/* Given dont touch ^ */
+
+start with Expression;
+
+Expression ::= error:e
+	  {: RESULT = new Absyn.SeqExpression(eleft, null); :}
+	| ArrayExpression:are
+    {: RESULT = are; :}
+	| AssignExpression:ase
+    {: RESULT = ase; :}
+  | BREAK:b
+    {: RESULT = new Absyn.BreakExpression(bleft); :}
+  | CallExpression:ce
+    {: RESULT = ce; :}
+  | ForExpression:fe
+    {: RESULT = fe; :}
+  | IfExpression:ie
+    {: RESULT = ie; :}
+  | INT:i
+    {: RESULT = new Absyn.IntExpression(ileft, i); :}
+  | LetExpression:le
+    {: RESULT = le; :}
+  | NIL:n
+    {: RESULT = new Absyn.NilExpression(nleft); :}
+  | OpExpression:oe
+    {: RESULT = oe; :}
+  | RecordExpression:re
+    {: RESULT = re; :}
+	| SeqExpression:se
+    {: RESULT = se; :}
+  | STRING:s
+    {: RESULT = new Absyn.StringExpression(sleft, s); :}
+  | Var:v
+	  {: RESULT = new Absyn.VarExpression(vleft, v); :}
+	| WhileExpression:we
+    {: RESULT = we; :}
+  ;
+
+ArrayExpression ::=
+  ID:id LBRACK Expression:arrayexpression1 RBRACK OF Expression:arrayexpression2
+    {: RESULT = new Absyn.ArrayExpression(idleft, sym(id), arrayexpression1, arrayexpression2); :}
+  ;
+
+AssignExpression ::= 
+  Var:aevar ASSIGN Expression:expression
+    {: RESULT = new Absyn.AssignExpression(aevarleft, aevar, expression); :}
+  ;
+
+CallExpression ::=
+  ID:id LPAREN FunctionArgumentList:funcarglist RPAREN
+    {: RESULT = new Absyn.CallExpression(idleft, sym(id), funcarglist); :}
+  ;
+
+DeclarationsTypeId ::= 
+    {: RESULT = null; :}
+  | COLON:colon ID:id
+    {: RESULT = new Absyn.NameType(cleft, sym(id)); :}
+  ;
+
+DeclarationsList ::=
+  Declarations:dec
+    {: RESULT = new Absyn.DeclarationsList(dec, null); :}
+  | Declarations:dec DeclarationsList:declist
+    {: RESULT = new Absyn.DeclarationsList(dec, declist); :}
+  ;
+
+Declarations ::=
+  VarDeclarations:vardec
+    {: RESULT = vardec; :}
+  | FunctionDeclarations:funcdec
+    {: RESULT = funcdec; :}
+  | TypeDeclarations:typedec
+    {: RESULT = typedec; :}
+  ;
+
+ExpressionList ::=
+    {: RESULT = null; :}
+  | Expression:exp
+    {: RESULT = new Absyn.ExpressionList(exp, null); :}
+  | Sequence:seq
+    {: RESULT = seq; :}
+  ;
+
+FunctionArgumentList ::=
+    {: RESULT = null; :}
+  | Expression:exp NextFunctionArgumentList:nextlist
+    {: RESULT = new Absyn.ExpressionList(exp, nextlist); :}
+  ;
+
+FieldList ::=
+    {: RESULT = null; :}
+  | ID:id COLON ID:id2 NextFieldList:next
+    {: RESULT = new Absyn.FieldList(n1left, sym(id), sym(id2), next); :}
+  ;
+
+ForExpression ::=
+  FOR:for ID:id ASSIGN Expression:assignexp TO Expression:toexp DO Expression:doexp
+    {: RESULT = new Absyn.ForExpression(forleft, new Absyn.VarDeclarations(idleft, sym(id), null, assignexp), toexp, doexp); :}
+  ;
+
+FieldVar ::=
+  Var:var DOT:dot ID:id
+    {: RESULT = new Absyn.FieldVar(dotleft, var, sym(id)); :}
+  ;
+
+FunctionDeclarations ::=
+  FUNCTION:func ID:id LPAREN FieldList:fields RPAREN DeclarationsTypeId:type EQ Expression:exp NextFunctionDeclarations:next
+    {: RESULT = new Absyn.FunctionDeclarations(funcleft, sym(id), fields, type, exp, next); :}
+  ;
+
+FieldExpressionList ::=
+    {: RESULT = null; :}
+  | ID:id EQ Expression:exp NextFieldExpressionList:next
+    {: RESULT = new Absyn.FieldExpressionList(idleft, sym(id), exp, next); :}
+  ;
+
+IfExpression ::=
+  Expression:ifexp1 AND Expression:ifexp2
+    {: RESULT = new Absyn.IfExpression(ifexp1left, ifexp1, ifexp2, new Absyn.IntExpression(ifexp1left, 0)); :}
+  | Expression:ifexp1 OR Expression:ifexp2
+    {: RESULT = new Absyn.IfExpression(e1left, ifexp1, new Absyn.IntExpression(e1left, 1), ifexp2); :}
+  | IF:if Expression:ifexp1 THEN Expression:ifexp2
+    {: RESULT = new Absyn.IfExpression(ifleft, ifexp1, ifexp2); :}
+  | IF:if Expression:ifexp1 THEN Expression:ifexp2 ELSE Expression:ifexp3
+    {: RESULT = new Absyn.IfExpression(ifleft, ifexp1, ifexp2, ifexp3); :}
+  ;
+
+LetExpression ::= 
+  LET:let DeclarationsList:declist IN ExpressionList:explist END
+    {: RESULT = new Absyn.LetExpression(letleft, declist, new Absyn.SeqExpression(explistleft, explist)); :}
+  ;
+
+NextFunctionArgumentList ::=
+    {: RESULT = null; :}
+  | COMMA:comma Expression:exp NextFunctionArgumentList:nextlist
+    {: RESULT = new Absyn.ExpressionList(exp, nextlist); :}
+  ;
+
+NextTypeDeclarations ::=
+    {: RESULT = null; :}
+  | TypeDeclarations:typedec
+    {: RESULT = typedec; :}
+  ;
+
+NextFunctionDeclarations ::=
+    {: RESULT = null; :}
+  | FunctionDeclarations:funcdec
+    {: RESULT = funcdec; :}
+  ;
+
+NextFieldList ::=
+    {: RESULT = null; :}
+  | COMMA:comma ID:id1 COLON ID:id2 NextFieldList:next
+    {: RESULT = new Absyn.FieldList(commaleft, sym(id1), sym(id2), next); :}
+  ;
+
+NextFieldExpressionList ::=
+    {: RESULT = null; :}
+  | COMMA:comma ID:id EQ Expression:exp NextFieldExpressionList:next
+    {: RESULT = new Absyn.FieldExpressionList(commaleft, sym(id), exp, next); :}
+  ;
+
+NextSequence ::= 
+	Expression:exp
+	  {: RESULT = new Absyn.ExpressionList(exp, null); :}
+	| Sequence:seq
+	  {: RESULT = seq; :}
+	;
+
+OpExpression ::=
+  Expression:opexp1 PLUS Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.PLUS, opexp2); :}
+  | Expression:opexp1 MINUS Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.MINUS, opexp2); :}
+  | Expression:opexp1 TIMES Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.MUL, opexp2); :}
+  | Expression:opexp1 DIVIDE Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.DIV, opexp2); :}
+  | Expression:opexp1 GT Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.GT, opexp2); :}
+  | Expression:opexp1 LT Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.LT, opexp2); :}
+  | Expression:opexp1 GE Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.GE, opexp2); :}
+  | Expression:opexp1 LE Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.LE, opexp2); :}
+  | Expression:opexp1 EQ Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.EQ, opexp2); :}
+  | Expression:opexp1 NEQ Expression:opexp2
+    {: RESULT = new Absyn.OpExpression(opexp1left, opexp1, Absyn.OpExpression.NE, opexp2); :}
+  | MINUS:minus Expression:exp
+    {: RESULT = new Absyn.OpExpression(minusleft, new Absyn.IntExpression(minusleft,0), Absyn.OpExpression.MINUS, exp); :}
+  ;
+
+RecordExpression ::=
+  ID:id LBRACE FieldExpressionList:fexplist RBRACE
+    {: RESULT = new Absyn.RecordExpression(idleft, sym(id), fexplist); :}
+  ;
+
+SeqExpression ::=
+  LPAREN:leftparen ExpressionList:explist RPAREN
+    {: RESULT = new Absyn.SeqExpression(leftparenleft, list); :}
+  ;
+
+Sequence ::=
+  Expression:exp SEMICOLON NextSequence:nextseq
+    {: RESULT = new Absyn.ExpressionList(exp, nextseq); :}
+  ;
+
+SubscriptVar ::=
+	ID:id LBRACK:lbrack Expression:exp RBRACK
+	  {: RESULT = new Absyn.SubscriptVar(lleft, new Absyn.SimpleVar(nleft, sym(id)), exp); :}
+	| FieldVar:fv LBRACK:lbrack Expression:exp RBRACK
+	  {: RESULT = new Absyn.SubscriptVar(lleft, fv, exp); :}
+	| SubscriptVar:sv LBRACK:lbrack Expression:exp RBRACK
+	  {: RESULT = new Absyn.SubscriptVar(lleft, sv, exp); :}
+	;
+
+TypeDeclarations ::= 
+  TYPE:type ID:id EQ Types:eqtype NextTypeDeclarations:next
+    {: RESULT = new Absyn.TypeDeclarations(tleft, sym(id), eqtype, next); :}
+  ;
+
+Types ::= 
+  ID:id
+	  {:RESULT = new Absyn.NameType(idleft, sym(id)); :} 
+	| LBRACE:lbrace FieldList:fieldlist RBRACE
+	  {: RESULT = new Absyn.RecordTy(lbraceleft, fieldlist); :}
+	| ARRAY:array OF ID:id
+	  {: RESULT = new Absyn.ArrayTy(arrayleft, sym(id)); :}
+	;
+
+Var ::=
+  ID:id
+    {: RESULT = new Absyn.SimpleVar(idleft, sym(id)); :}
+  | FieldVar:fieldvar
+    {: RESULT = fieldvar; :}
+  | SubscriptVar:subvar
+    {: RESULT = subvar; :}
+  ;
+
+VarDeclarations ::=
+  VAR:var ID:id DeclarationsTypeId:dectype ASSIGN Expression:express
+    {: RESULT = new Absyn.VarDeclarations(vleft, sym(id), dectype, express); :}
+  ;
+
+WhileExpression ::=
+  WHILE:while Expression:exp1 DO Expression:exp2
+    {: RESULT = new Absyn.WhileExpression(whileleft, exp1, exp2); :}
+  ;
